@@ -27,6 +27,25 @@ GO_non_parsed <- go_obo@.kv
 
 GO_non_parsed_subset <- GO_non_parsed[1:2000, ]
 
+#write GO_non_parsed_subset to a file
+write.table(GO_non_parsed_subset, "GO_non_parsed_subset.txt", sep = "\t", row.names = FALSE, col.names = FALSE)
+
+# filter the GO_non_parsed_subset for name
+GO_numbers_with_names <- GO_non_parsed_subset[grepl("name", GO_non_parsed_subset$key), ]
+
+#put the key "namespace" in its own column using the pivot family functions
+
+
+
+
+
+
+# View the result
+print(GO_numbers_with_names)
+
+
+
+
 #extracting the GO numbers with names https://stackoverflow.com/questions/78532080/getting-namespace-from-a-obo-formatted-text-file
 
 # dat <- read.delim("go-basic.obo", header=F)
