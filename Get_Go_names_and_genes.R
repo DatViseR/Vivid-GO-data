@@ -1,4 +1,4 @@
-# # This script create a datatable with all the GO annotations matched to genes and 
+# # This script create a datatable and a parquet file with all the GO annotations matched to genes and 
 # This script performs the following tasks:
 #   
 #   Load Gene Ontology Annotation (GAF) File:
@@ -86,4 +86,15 @@ GO_names_and_genes<-GO_names_and_genes |> dplyr::select(id,name,gene, ontology =
 
 #save GO_names_and_genes to a file
 write.table(GO_names_and_genes,"GO_names_and_genes.txt", sep = "\t", row.names = FALSE, col.names = TRUE)
+library(arrow)
 
+# Read the data once again
+library(readr)
+To_parquet <- read_delim("GO_names_and_genes.txt", 
+                         delim = "\t", escape_double = FALSE, 
+                         trim_ws = TRUE)
+str(To_parquet)
+
+
+# Write to Parquet file for Vivid-Volcano application 
+write_parquet(To_parquet, "GO.parquet")
