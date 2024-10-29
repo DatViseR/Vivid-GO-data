@@ -33,8 +33,12 @@ library(data.table)
 # Load GAF file
 gaf_file <- "goa_human.gaf"  # Ensure you've downloaded the file to this path
 gaf <- fread(gaf_file, skip = "!")  # Skip header lines starting with '!'
-# Select the relevant columns
-gaf_filtered <- gaf[, .(GO_ID = V5, Gene = V3, Aspect = V9)]
+# Select the relevant columns - filter pseudogenes out of the data
+gaf_filtered <- gaf %>% filter(V12 == "protein") %>% select(V3, V5, V9) 
+
+
+# Filter for protein-coding genes
+
 
 # Install required packages if not already installed
 if (!require("BiocManager", quietly = TRUE))
@@ -77,7 +81,7 @@ GO_numbers_with_names2 <- setNames(GO_numbers_with_names2, c("id", "name", "onto
 write.table(GO_numbers_with_names2,"GO_numbers_with_names2.txt", sep = "\t", row.names = FALSE, col.names = TRUE)
 
 #change the colnames of gaf_filtered to match the GO_numbers_with_names2
-colnames(gaf_filtered) <- c("id", "gene", "ontology")
+colnames(gaf_filtered) <- c("gene", "id", "ontology")
 
 # join the gaf_filtered and GO_numbers_with_names2 on id
 GO_names_and_genes <- dplyr::left_join(gaf_filtered, GO_numbers_with_names2, by = "id")
