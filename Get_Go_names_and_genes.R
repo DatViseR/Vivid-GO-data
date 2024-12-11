@@ -102,3 +102,50 @@ str(To_parquet)
 
 # Write to Parquet file for Vivid-Volcano application 
 write_parquet(To_parquet, "GO.parquet")
+
+# Estimate the number of non-redundant no overlapping GO categories at level 3
+
+library(GSEABase)
+library(data.table)
+
+# Step 1: Convert the `kv` slot to a `data.table` for fast processing
+kv_dt <- as.data.table(go_obo@.kv)
+
+# Step 2: Filter for `is_a` relationships
+is_a_relations <- kv_dt[key == "is_a"]
+
+# Step 3: Create a parent-child map as a `data.table` for fast lookups
+parent_child_map <- is_a_relations[, .(parent = value), by = stanza_id]
+setnames(parent_child_map, "stanza_id", "child")
+
+# Step 4: Initialize levels as a named vector and set root terms to level 1
+go_ids <- go_obo@ids
+levels <- integer(length(go_ids))  # Using integers is more memory efficient
+names(levels) <- go_ids
+levels[] <- NA
+
+# Identify root terms (terms with no parents)
+root_terms <- setdiff(go_ids, parent_child_map$parent)
+levels[root_terms] <- 1
+
+# Step 5: Queue-based traversal for level assignment
+queue <- root_terms  # Start with root terms
+while (length(queue) > 0) {
+  current_term <- queue[1]
+  queue <- queue[-1]  # Dequeue the current term
+  
+  # Get child terms for the current term using data.table join
+  child_terms <- parent_child_map[parent == current_term, child]
+  
+  # Assign levels to child terms and add them to the queue if not already leveled
+  new_children <- child_terms[is.na(levels[child_terms])]
+  levels[new_children] <- levels[current_term] + 1
+  queue <- c(queue, new_children)  # Enqueue only new children
+}
+
+# Step 6: Filter terms at level 3 and count them
+level_3_terms <- names(levels[levels == 3])
+
+# Final count of level 3 terms
+n_level_3_terms <- length(level_3_terms)
+n_level_3_terms  # is 15306  - the real number is around 1160??
